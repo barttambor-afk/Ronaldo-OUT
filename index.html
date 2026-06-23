@@ -124,7 +124,8 @@
     <div class="side-badge badge-left">OUT!</div>
     <div class="side-badge badge-right">OUT!</div>
 
-    <img src="https://assets.wphybrid.com/assets/goal-pl/wp-content/uploads/2026/02/cristiano-ronaldo.jpg" alt="Cristiano Ronaldo">
+    <!-- Twoje nowe zaktualizowane zdjęcie -->
+    <img src="https://www.idman.biz/media/2025/11/07/1920x1280/ronaldo.jpg?v=1762460934" alt="Cristiano Ronaldo">
 
     <p class="quote">
         „Sometimes an individual just cannot say 'enough'. It is up to humanity to collectively decide that the time has come for Cristiano Ronaldo to leave the Portugal national team – for the good of the game itself.”
@@ -138,21 +139,23 @@
     </div>
 
     <script>
-        // Nowy, stabilny serwer stworzony specjalnie dla statycznych stron GitHub Pages
-        const NAMESPACE = "barttambor_ronaldo_out_2026_final";
-        const KEY = "votes";
-        
+        // Oficjalne i stabilne API do zliczania głosów
+        const ID = "barttambor_ronaldo_out_global_real";
         const voteBtn = document.getElementById('voteBtn');
         const counterText = document.getElementById('counterText');
-        const hasVoted = localStorage.getItem('hasVotedRonaldoOutFinal');
+        
+        // Zmieniony klucz, aby po aktualizacji kodu przycisk znowu się odblokował do testu
+        const STORAGE_KEY = "hasVotedRonaldoOutRealFix";
+        const hasVoted = localStorage.getItem(STORAGE_KEY);
 
         async function getVotes() {
             try {
-                const response = await fetch(`https://countapi.clb.li/get/${NAMESPACE}/${KEY}`);
+                const response = await fetch(`https://api.counterapi.dev/v1/${ID}/votes`);
                 if (response.ok) {
                     const data = await response.json();
-                    return data.value || 0;
+                    return data.count || 0;
                 }
+                // Jeśli licznik jeszcze nie istnieje na tym serwerze, zostanie stworzony przy pierwszym "hit"
                 return 0;
             } catch (error) {
                 console.error(error);
@@ -171,26 +174,26 @@
         }
 
         voteBtn.addEventListener('click', async () => {
-            if (localStorage.getItem('hasVotedRonaldoOutFinal')) return;
+            if (localStorage.getItem(STORAGE_KEY)) return;
 
             voteBtn.disabled = true;
             voteBtn.innerText = "Sending...";
 
             try {
-                // Ta komenda zwiększa licznik na serwerze o +1 bezpiecznie i stabilnie
-                const response = await fetch(`https://countapi.clb.li/hit/${NAMESPACE}/${KEY}`);
+                // Zapytanie zwiększające licznik o 1
+                const response = await fetch(`https://api.counterapi.dev/v1/${ID}/votes/up`);
                 if (response.ok) {
                     const data = await response.json();
-                    counterText.innerText = data.value;
+                    counterText.innerText = data.count;
                     voteBtn.innerText = "Vote cast!";
-                    localStorage.setItem('hasVotedRonaldoOutFinal', 'true');
+                    localStorage.setItem(STORAGE_KEY, 'true');
                 } else {
                     throw new Error("API error");
                 }
             } catch (error) {
                 voteBtn.disabled = false;
                 voteBtn.innerText = "Vote for OUT";
-                alert("Connection error, please try again!");
+                alert("Server connection issue. Please try again!");
             }
         });
 
