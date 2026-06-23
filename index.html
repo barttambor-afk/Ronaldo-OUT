@@ -134,24 +134,24 @@
 
     <div class="counter-section">
         <button id="voteBtn">Vote for OUT</button>
-        <div class="count">Votes: <span id="counterText">0</span></div>
+        <div class="count">Votes: <span id="counterText">Loading...</span></div>
     </div>
 
     <script>
-        // Unikalny adres licznika w nowej, stabilnej i w pełni otwartej bazie danych KV
-        const API_URL = "https://api.keyvalue.xyz/bda7e271/ronaldo_out_counter";
+        // Nowy, stabilny serwer stworzony specjalnie dla statycznych stron GitHub Pages
+        const NAMESPACE = "barttambor_ronaldo_out_2026_final";
+        const KEY = "votes";
         
         const voteBtn = document.getElementById('voteBtn');
         const counterText = document.getElementById('counterText');
-        const hasVoted = localStorage.getItem('hasVotedRonaldoOut');
+        const hasVoted = localStorage.getItem('hasVotedRonaldoOutFinal');
 
         async function getVotes() {
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(`https://countapi.clb.li/get/${NAMESPACE}/${KEY}`);
                 if (response.ok) {
-                    const text = await response.text();
-                    const val = parseInt(text.trim());
-                    return isNaN(val) ? 0 : val;
+                    const data = await response.json();
+                    return data.value || 0;
                 }
                 return 0;
             } catch (error) {
@@ -171,30 +171,26 @@
         }
 
         voteBtn.addEventListener('click', async () => {
-            if (localStorage.getItem('hasVotedRonaldoOut')) return;
+            if (localStorage.getItem('hasVotedRonaldoOutFinal')) return;
 
             voteBtn.disabled = true;
             voteBtn.innerText = "Sending...";
 
-            const latestVotes = await getVotes();
-            const newVotesCount = latestVotes + 1;
-
             try {
-                const response = await fetch(API_URL + "/" + newVotesCount, {
-                    method: 'POST'
-                });
+                // Ta komenda zwiększa licznik na serwerze o +1 bezpiecznie i stabilnie
+                const response = await fetch(`https://countapi.clb.li/hit/${NAMESPACE}/${KEY}`);
                 if (response.ok) {
-                    counterText.innerText = newVotesCount;
+                    const data = await response.json();
+                    counterText.innerText = data.value;
                     voteBtn.innerText = "Vote cast!";
-                    localStorage.setItem('hasVotedRonaldoOut', 'true');
+                    localStorage.setItem('hasVotedRonaldoOutFinal', 'true');
                 } else {
-                    throw new Error("Failed to save");
+                    throw new Error("API error");
                 }
             } catch (error) {
-                // Jeśli serwer odrzuci zapis, przywracamy przycisk
                 voteBtn.disabled = false;
                 voteBtn.innerText = "Vote for OUT";
-                alert("Server busy. Please try again in a second!");
+                alert("Connection error, please try again!");
             }
         });
 
