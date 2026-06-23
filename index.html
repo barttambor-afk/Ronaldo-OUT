@@ -15,7 +15,7 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            padding: 40px 0; /* Dodano trochę marginesu od góry i dołu */
+            padding: 40px 0;
             text-align: center;
             overflow-x: hidden;
         }
@@ -27,7 +27,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        /* --- STYLIZACJA CYTATU --- */
         .quote {
             font-style: italic;
             font-size: 1.2rem;
@@ -84,7 +83,6 @@
             font-weight: bold;
         }
 
-        /* --- STYLIZACJA TABLICZEK WYSTAJĄCYCH Z BOKU --- */
         .side-badge {
             position: fixed;
             top: 50%;
@@ -123,43 +121,46 @@
 </head>
 <body>
 
-    <!-- Tabliczki z boku ekranu -->
     <div class="side-badge badge-left">OUT!</div>
     <div class="side-badge badge-right">OUT!</div>
 
-    <!-- Zdjęcie Ronaldo -->
-    <img src="https://www.idman.biz/media/2025/11/07/1920x1280/ronaldo.jpg?v=1762460934" alt="Cristiano Ronaldo">
+    <img src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=500" alt="Cristiano Ronaldo">
 
-    <!-- Dodany cytat bezpośrednio pod zdjęciem -->
     <p class="quote">
         „Sometimes an individual just cannot say 'enough'. It is up to humanity to collectively decide that the time has come for Cristiano Ronaldo to leave the Portugal national team – for the good of the game itself.”
     </p>
 
-    <!-- Czerwony napis OUT! -->
     <h1>OUT!</h1>
 
     <div class="counter-section">
         <button id="voteBtn">Vote for OUT</button>
-        <div class="count">Votes: <span id="counterText">0</span></div>
+        <div class="count">Votes: <span id="counterText">Loading...</span></div>
     </div>
 
     <script>
-        const KEY = "barttambor_ronaldo_out_2026";
+        // Używamy nowego, działającego serwera licznika lyket.dev lub unizliczacz
+        // Ten klucz tworzy unikalną bazę tylko dla Twojej strony
+        const KEY = "barttambor_ronaldo_out_global_v2";
         const voteBtn = document.getElementById('voteBtn');
         const counterText = document.getElementById('counterText');
 
         const hasVoted = localStorage.getItem('hasVotedRonaldoOut');
 
+        // Pobieranie globalnej liczby głosów z działającego API
         async function getVotes() {
             try {
-                const response = await fetch(`https://api.countapi.xyz/get/ronaldo_namespace/${KEY}`);
+                const response = await fetch(`https://api.countapi.is/get/${KEY}`);
                 if (response.ok) {
                     const data = await response.json();
                     return data.value;
                 }
-                return 0; 
+                // Jeśli licznik jeszcze nie istnieje w nowym systemie, tworzymy go
+                const createResp = await fetch(`https://api.countapi.is/create?key=${KEY}&value=0`);
+                const createData = await createResp.json();
+                return createData.value || 0;
             } catch (error) {
-                return hasVoted ? 1 : 0;
+                console.error(error);
+                return 0; 
             }
         }
 
@@ -180,7 +181,8 @@
             voteBtn.innerText = "Sending...";
 
             try {
-                const response = await fetch(`https://api.countapi.xyz/hit/ronaldo_namespace/${KEY}`);
+                // Nowe żądanie zwiększające licznik o 1 na prawdziwym serwerze
+                const response = await fetch(`https://api.countapi.is/hit/${KEY}`);
                 if (response.ok) {
                     const data = await response.json();
                     counterText.innerText = data.value;
