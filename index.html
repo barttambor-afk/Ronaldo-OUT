@@ -138,27 +138,29 @@
     </div>
 
     <script>
-        // Stabilny, unikalny adres URL do bazy Firebase Realtime Database
-        const DB_URL = "https://ronaldo-out-counter-default-rtdb.europe-west1.firebasedatabase.app/votes.json";
+        // Nowy adres kierujący bezpośrednio do pola z liczbą, aby uniknąć problemu [object Object]
+        const DB_URL = "https://ronaldo-out-counter-default-rtdb.europe-west1.firebasedatabase.app/v2_count.json";
         
         const voteBtn = document.getElementById('voteBtn');
         const counterText = document.getElementById('counterText');
         const hasVoted = localStorage.getItem('hasVotedRonaldoOut');
 
-        // Funkcja pobierająca aktualną liczbę głosów z bazy danych Google
         async function getVotes() {
             try {
                 const response = await fetch(DB_URL);
                 const data = await response.json();
-                // Jeśli baza jest zupełnie pusta, zwracamy 0
-                return data !== null ? data : 0;
+                
+                // Zabezpieczenie przed obiektami – jeśli Firebase zwróci coś innego niż czystą liczbę
+                if (data === null) return 0;
+                if (typeof data === 'object') return 0;
+                
+                return parseInt(data) || 0;
             } catch (error) {
                 console.error("Database error:", error);
                 return 0;
             }
         }
 
-        // Funkcja zapisująca nową wartość w bazie danych
         async function updateVotes(newValue) {
             try {
                 await fetch(DB_URL, {
@@ -189,11 +191,9 @@
             voteBtn.disabled = true;
             voteBtn.innerText = "Sending...";
 
-            // Pobieramy najświeższą wartość prosto z serwera przed dodaniem głosu
             const latestVotes = await getVotes();
             const newVotesCount = latestVotes + 1;
 
-            // Zapisujemy nową wartość zwiększoną o 1 w chmurze
             const success = await updateVotes(newVotesCount);
 
             if (success) {
@@ -201,7 +201,6 @@
                 voteBtn.innerText = "Vote cast!";
                 localStorage.setItem('hasVotedRonaldoOut', 'true');
             } else {
-                // W razie problemów z siecią u użytkownika
                 voteBtn.disabled = false;
                 voteBtn.innerText = "Vote for OUT";
                 alert("Connection problem. Please try again!");
@@ -212,3 +211,4 @@
     </script>
 </body>
 </html>
+
