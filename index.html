@@ -134,12 +134,12 @@
 
     <div class="counter-section">
         <button id="voteBtn">Vote for OUT</button>
-        <div class="count">Votes: <span id="counterText">Loading...</span></div>
+        <div class="count">Votes: <span id="counterText">0</span></div>
     </div>
 
     <script>
-        // Nowy adres kierujący bezpośrednio do pola z liczbą, aby uniknąć problemu [object Object]
-        const DB_URL = "https://ronaldo-out-counter-default-rtdb.europe-west1.firebasedatabase.app/v2_count.json";
+        // Unikalny adres licznika w nowej, stabilnej i w pełni otwartej bazie danych KV
+        const API_URL = "https://api.keyvalue.xyz/bda7e271/ronaldo_out_counter";
         
         const voteBtn = document.getElementById('voteBtn');
         const counterText = document.getElementById('counterText');
@@ -147,31 +147,16 @@
 
         async function getVotes() {
             try {
-                const response = await fetch(DB_URL);
-                const data = await response.json();
-                
-                // Zabezpieczenie przed obiektami – jeśli Firebase zwróci coś innego niż czystą liczbę
-                if (data === null) return 0;
-                if (typeof data === 'object') return 0;
-                
-                return parseInt(data) || 0;
-            } catch (error) {
-                console.error("Database error:", error);
+                const response = await fetch(API_URL);
+                if (response.ok) {
+                    const text = await response.text();
+                    const val = parseInt(text.trim());
+                    return isNaN(val) ? 0 : val;
+                }
                 return 0;
-            }
-        }
-
-        async function updateVotes(newValue) {
-            try {
-                await fetch(DB_URL, {
-                    method: 'PUT',
-                    body: JSON.stringify(newValue),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                return true;
             } catch (error) {
-                console.error("Update error:", error);
-                return false;
+                console.error(error);
+                return 0;
             }
         }
 
@@ -194,16 +179,22 @@
             const latestVotes = await getVotes();
             const newVotesCount = latestVotes + 1;
 
-            const success = await updateVotes(newVotesCount);
-
-            if (success) {
-                counterText.innerText = newVotesCount;
-                voteBtn.innerText = "Vote cast!";
-                localStorage.setItem('hasVotedRonaldoOut', 'true');
-            } else {
+            try {
+                const response = await fetch(API_URL + "/" + newVotesCount, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    counterText.innerText = newVotesCount;
+                    voteBtn.innerText = "Vote cast!";
+                    localStorage.setItem('hasVotedRonaldoOut', 'true');
+                } else {
+                    throw new Error("Failed to save");
+                }
+            } catch (error) {
+                // Jeśli serwer odrzuci zapis, przywracamy przycisk
                 voteBtn.disabled = false;
                 voteBtn.innerText = "Vote for OUT";
-                alert("Connection problem. Please try again!");
+                alert("Server busy. Please try again in a second!");
             }
         });
 
@@ -211,4 +202,3 @@
     </script>
 </body>
 </html>
-
